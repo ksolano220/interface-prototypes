@@ -1,21 +1,11 @@
 # interface-prototypes
 
-Four self-contained HTML prototypes exploring where GUI is heading, built out of a conversation tracing interface history (CLI → GUI → touch → voice → spatial → agentic/generative UI) into a question about how a designed object expresses "a view from somewhere" instead of trying to be neutral.
+Wayfare — a walk-planning app that composes today's route from a step goal, a time window, and what you want to see along the way (a park, a busy street, a river skyline).
 
-Each file is a single, dependency-free HTML page (fonts embedded as base64, no external requests) — open any of them directly in a browser.
+Real map, real streets: Leaflet + CARTO's free dark basemap tiles, with actual walking directions from OSRM's free public routing API — no API key, no signup, nothing to configure. Falls back to a straight-line estimate if the routing service is ever unreachable.
 
-## The four objects
+Design: a fixed navy "blueprint" grammar (grid, spec labels, IBM Plex Mono + Bricolage Grotesque) that stays constant while the route, stats, and itinerary regenerate live as you touch any control — no separate "generate" step.
 
-**`glass-intent.html`** — Liquid glass material over a generative-UI interaction: type an intent (or tap a suggestion) and the interface builds a different-shaped surface around it live. The trend-report version: synthesizes 2026's liquid glass + generative UI conversation, deliberately took no strong stance.
+Single self-contained file, `index.html`. Open it directly in a browser, or serve it from GitHub Pages.
 
-**`no-asterisks.html`** — A mobile paywall screen with the opposite stance: maximal, loud, brutalist. Every renewal date and fee is printed as loud as the price; the default plan is the one that makes the company *less* money, on principle. The point of view: transparency as an ethic, refusal as a design tool.
-
-**`fixed-grammar.html`** — The actual thesis, made concrete: four unrelated domains (weather, a dinner reservation, a boarding pass, a houseplant) rendered through one identical, never-moving template. Same slot positions, same button, only the content changes. This is the bet on where interfaces are actually heading — not a new visual skin, but a stable grammar with generated filling.
-
-**`wayfare.html`** — A working walk-planning app: set a step goal, pick a time window, tap illustrated stop cards (a park, a street, a river skyline) to build today's route. A live accordion itinerary and sticky CTA track distance, steps, and time against the goal. Styled to match a specific clean travel-app reference (photo-card layout, pill tabs, floating bottom nav) rather than a generic take — went through an earlier holographic-HUD pass first, kept in git history.
-
-## Notes
-
-- All four commit to a single visual theme (they don't adapt to OS light/dark mode) — each is a deliberate, atmospheric world, not a utility that needs to fit every context.
-- `wayfare.html` and `no-asterisks.html` are designed mobile-first (open on a phone, or view the desktop preview inside the phone-frame mockup).
-- Route/pricing/waypoint data in all four is illustrative, not live — no real APIs, no real mapping data.
+Earlier explorations (a liquid-glass generative-UI demo, a brutalist paywall, a fixed-grammar demo across four unrelated domains, and two earlier passes at this same walk planner) live in git history if useful, but this file is the one that stuck.
