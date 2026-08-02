@@ -12,10 +12,10 @@ Each file is a single, dependency-free HTML page (fonts embedded as base64, no e
 
 **`fixed-grammar.html`** — The actual thesis, made concrete: four unrelated domains (weather, a dinner reservation, a boarding pass, a houseplant) rendered through one identical, never-moving template. Same slot positions, same button, only the content changes. This is the bet on where interfaces are actually heading — not a new visual skin, but a stable grammar with generated filling.
 
-**`wayfare-hud.html`** — A working walk-planning app: set a step goal, pick a time window, tap glowing points on an illustrated SoHo/Hudson River map to compose a route live. Circular gauges track distance, steps, and time against the goal. Styled as a holographic HUD per a specific visual reference, rather than a generic take.
+**`wayfare.html`** — A working walk-planning app: set a step goal, pick a time window, tap illustrated stop cards (a park, a street, a river skyline) to build today's route. A live accordion itinerary and sticky CTA track distance, steps, and time against the goal. Styled to match a specific clean travel-app reference (photo-card layout, pill tabs, floating bottom nav) rather than a generic take — went through an earlier holographic-HUD pass first, kept in git history.
 
 ## Notes
 
 - All four commit to a single visual theme (they don't adapt to OS light/dark mode) — each is a deliberate, atmospheric world, not a utility that needs to fit every context.
-- `wayfare-hud.html` and `no-asterisks.html` are designed mobile-first (open on a phone, or view the desktop preview inside the phone-frame mockup).
+- `wayfare.html` and `no-asterisks.html` are designed mobile-first (open on a phone, or view the desktop preview inside the phone-frame mockup).
 - Route/pricing/waypoint data in all four is illustrative, not live — no real APIs, no real mapping data.
