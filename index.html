@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>City Strolls — plan this walk</title>
+<title>STEPS — plan this walk</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" />
 <style>
@@ -211,7 +211,7 @@
 
       <div class="body">
         <div class="logo-row">
-          <div class="logo-mark glass" aria-label="City Strolls">
+          <div class="logo-mark glass" aria-label="STEPS">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="4" r="2" fill="currentColor" stroke="none"/>
               <path d="M12 6 L11 13" />
@@ -487,33 +487,58 @@
       }
     });
 
-    var points = [HOME].concat(vibes.map(function (k) { return PLACES[k]; }));
-    var bounds = L.latLngBounds(points.map(function (p) { return [p.lat, p.lng]; }));
+    var stopPoints = vibes.map(function (k) { return PLACES[k]; });
+    var loopPoints = [HOME].concat(stopPoints).concat([HOME]);
+    var bounds = L.latLngBounds(loopPoints.map(function (p) { return [p.lat, p.lng]; }));
     map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15.5 });
 
     var myToken = ++routeReqToken;
-    var coordStr = points.map(function (p) { return p.lng + ',' + p.lat; }).join(';');
     mapNote.textContent = 'ROUTING…';
-    fetch('https://router.project-osrm.org/route/v1/foot/' + coordStr + '?overview=full&geometries=geojson')
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (myToken !== routeReqToken) return;
-        if (!data.routes || !data.routes[0]) throw new Error('no route');
-        var route = data.routes[0];
-        routeLayer.setLatLngs(route.geometry.coordinates.map(function (c) { return [c[1], c[0]]; }));
-        applyStats(route.distance / 1609.34, route.duration / 60);
-        mapNote.textContent = 'ROUTED · OSRM WALKING';
-        mapNoteRight.textContent = 'REAL STREETS';
-      })
-      .catch(function () {
-        if (myToken !== routeReqToken) return;
-        routeLayer.setLatLngs(points.map(function (p) { return [p.lat, p.lng]; }));
-        var miles = 0;
-        for (var i = 1; i < points.length; i++) miles += haversineMiles(points[i - 1], points[i]);
-        applyStats(miles, miles * 20);
-        mapNote.textContent = 'STRAIGHT-LINE ESTIMATE';
-        mapNoteRight.textContent = 'APPROX';
-      });
+
+    function fetchRoute(pts) {
+      var coordStr = pts.map(function (p) { return p.lng + ',' + p.lat; }).join(';');
+      return fetch('https://router.project-osrm.org/route/v1/foot/' + coordStr + '?overview=full&geometries=geojson').then(function (r) { return r.json(); });
+    }
+
+    function finalize(route, laps) {
+      if (myToken !== routeReqToken) return;
+      routeLayer.setLatLngs(route.geometry.coordinates.map(function (c) { return [c[1], c[0]]; }));
+      applyStats(route.distance / 1609.34, route.duration / 60, laps);
+      mapNote.textContent = laps > 1 ? ('ROUTED · ' + laps + ' LAPS · OSRM WALKING') : 'ROUTED · OSRM WALKING';
+      mapNoteRight.textContent = 'REAL STREETS';
+    }
+
+    function fallback() {
+      if (myToken !== routeReqToken) return;
+      routeLayer.setLatLngs(loopPoints.map(function (p) { return [p.lat, p.lng]; }));
+      var miles = 0;
+      for (var i = 1; i < loopPoints.length; i++) miles += haversineMiles(loopPoints[i - 1], loopPoints[i]);
+      applyStats(miles, miles * 20, 1);
+      mapNote.textContent = 'STRAIGHT-LINE ESTIMATE';
+      mapNoteRight.textContent = 'APPROX';
+    }
+
+    fetchRoute(loopPoints).then(function (data) {
+      if (myToken !== routeReqToken) return;
+      if (!data.routes || !data.routes[0]) throw new Error('no route');
+      var lapMiles = data.routes[0].distance / 1609.34;
+      var lapSteps = Math.round(lapMiles * 2000);
+      var laps = Math.max(1, Math.min(8, Math.ceil(state.goal / Math.max(1, lapSteps))));
+
+      if (laps === 1) {
+        finalize(data.routes[0], 1);
+        return;
+      }
+
+      var extended = [HOME];
+      for (var i = 0; i < laps; i++) extended = extended.concat(stopPoints);
+      extended.push(HOME);
+
+      fetchRoute(extended).then(function (data2) {
+        if (!data2.routes || !data2.routes[0]) throw new Error('no route');
+        finalize(data2.routes[0], laps);
+      }).catch(fallback);
+    }).catch(fallback);
 
     accordion.innerHTML = vibes.map(function (key, i) {
       var p = PLACES[key];
@@ -539,14 +564,15 @@
     row.dataset.open = String(state.openRows[row.dataset.key]);
   });
 
-  function applyStats(miles, minutes) {
+  function applyStats(miles, minutes, laps) {
     var steps = Math.round(miles * 2000);
+    var lapNote = laps > 1 ? ' · ' + laps + ' laps' : '';
     statDistance.textContent = miles.toFixed(1);
     statSteps.textContent = steps.toLocaleString();
     statTime.textContent = Math.round(minutes);
     ctaBtn.textContent = steps >= state.goal
-      ? 'Start walking · ' + miles.toFixed(1) + ' mi · ' + Math.round(minutes) + ' min'
-      : 'Short of goal (' + steps.toLocaleString() + ' / ' + state.goal.toLocaleString() + ') · add a stop';
+      ? 'Start walking · ' + miles.toFixed(1) + ' mi · ' + Math.round(minutes) + ' min' + lapNote
+      : 'Closest real route (' + steps.toLocaleString() + ' / ' + state.goal.toLocaleString() + ')' + lapNote;
   }
 
 })();
