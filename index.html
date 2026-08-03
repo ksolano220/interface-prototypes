@@ -96,6 +96,9 @@
     display: flex; align-items: center; justify-content: space-around;
     padding: 0.6rem 0.5rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
     border-radius: 0;
+    transform: translateZ(0);
+    will-change: transform;
+    contain: layout paint;
   }
   .tab-item { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; color: var(--ink-faint); }
   .tab-item.active { color: var(--cyan); filter: drop-shadow(0 0 4px var(--cyan-dim)); }
@@ -110,10 +113,11 @@
   .goal-value { font-weight: 800; font-size: 1.7rem; color: var(--ink); font-variant-numeric: tabular-nums; text-shadow: 0 0 16px rgba(79,216,255,0.4); }
   .goal-unit { font-size: 0.78rem; color: var(--ink-soft); font-weight: 600; margin-left: 0.3rem; }
 
-  .pill-row { display: flex; gap: 0.45rem; margin-top: 0.6rem; }
+  .pill-row { display: flex; gap: 0.4rem; margin-top: 0.6rem; }
   .pill {
-    flex: 1; font-family: var(--font-mono); font-size: 0.72rem; text-align: center; padding: 0.5rem 0.3rem;
+    flex: 1; min-width: 0; font-family: var(--font-mono); font-size: 0.68rem; text-align: center; padding: 0.5rem 0.2rem;
     border-radius: 8px; border: 1px solid var(--glass-border); color: var(--ink-soft); cursor: pointer; transition: all 0.15s ease;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .pill[aria-pressed="true"] { background: rgba(79,216,255,0.14); border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 12px -3px var(--cyan-dim) inset; }
 
@@ -326,6 +330,31 @@
     skyline:{ color: '#4fd8ff', name: 'Pier 45', tag: 'SKYLINE', lng: -74.0107, lat: 40.7317 }
   };
 
+  // Real points further up the Hudson River Greenway — a single continuous
+  // real path, so "further" here means an actually farther real destination,
+  // not a fabricated distance. Picked by goal size so bigger goals reach
+  // further up the water instead of stalling at the closest pier.
+  var SKYLINE_TIERS = [
+    { name: 'Pier 45', lng: -74.0107, lat: 40.7317 },
+    { name: 'Little Island', lng: -74.0099, lat: 40.7413 },
+    { name: 'Chelsea Piers', lng: -74.0088, lat: 40.7470 }
+  ];
+
+  function chooseSkylinePoint(vibes) {
+    var others = vibes.filter(function (k) { return k !== 'skyline'; });
+    var othersRoundTripSteps = others.reduce(function (sum, k) {
+      return sum + haversineMiles(HOME, PLACES[k]) * 2 * 2000;
+    }, 0);
+    var budget = state.goal - othersRoundTripSteps;
+    var chosen = SKYLINE_TIERS[0];
+    for (var i = 0; i < SKYLINE_TIERS.length; i++) {
+      var roundTripSteps = haversineMiles(HOME, SKYLINE_TIERS[i]) * 2 * 2000;
+      if (roundTripSteps <= budget * 1.15) chosen = SKYLINE_TIERS[i];
+      else break;
+    }
+    return chosen;
+  }
+
   var IMAGES = { nature: null, people: null, skyline: null };
 
   var ROUTE_OPTIONS = [{"id": "trellis-route", "name": "Winding Paths", "pitch": "Explore hidden gems on this leisurely NYC stroll.", "waypoints": {"nature": {"day": "Stroll through the park's lush greenery, surrounded by vibrant flowers.", "afternoon": "Watch the fountain's mesmerizing display, with children playing nearby.", "evening": "Enjoy the street performers' lively music, as the sun sets over the Village."}, "people": {"day": "Browse local boutiques and art galleries, with their windows full of creative treasures.", "afternoon": "Relax with a coffee at one of the charming cafes, surrounded by cast-iron elegance.", "evening": "Take in the electric atmosphere, with crowds of people strolling and socializing."}, "skyline": {"day": "Breathe in the salty air and take in the stunning view of the Hudson River.", "afternoon": "Watch sailboats and ferries cruise by, with the Jersey City skyline shimmering in the distance.", "evening": "Witness the breathtaking sunset, with the city lights beginning to twinkle."}}}, {"id": "metro-route", "name": "City Rush", "pitch": "Get a taste of the fast-paced NYC experience on this dynamic route.", "waypoints": {"nature": {"day": "Make a quick visit to the park, with its iconic arch and lively atmosphere.", "afternoon": "Snap a photo in front of the fountain, then head back out onto the bustling streets.", "evening": "Catch a few minutes of street entertainment, before continuing your urban adventure."}, "people": {"day": "Glimpse the unique architecture, with its mix of old and new buildings.", "afternoon": "Grab a snack at one of the sidewalk cafes, and keep moving with the crowds.", "evening": "Feel the energy of the area, with its vibrant nightlife and lively crowds."}, "skyline": {"day": "Take a brief pause to enjoy the view, before continuing on your busy schedule.", "afternoon": "Watch the boats and ships passing by, with the city's busy pace in the background.", "evening": "Capture the sunset over the Hudson, before heading back into the city's action."}}}];
@@ -477,10 +506,18 @@
     ensureMap();
     var vibes = state.activeVibes;
 
+    if (vibes.indexOf('skyline') !== -1) {
+      var pick = chooseSkylinePoint(vibes);
+      PLACES.skyline.lat = pick.lat;
+      PLACES.skyline.lng = pick.lng;
+      PLACES.skyline.name = pick.name;
+    }
+
     ORDER.forEach(function (key) {
       var on = vibes.indexOf(key) !== -1;
       if (on) {
         if (!markers[key]) markers[key] = L.marker([PLACES[key].lat, PLACES[key].lng], { icon: divIcon(PLACES[key].color, 17, false) });
+        markers[key].setLatLng([PLACES[key].lat, PLACES[key].lng]);
         markers[key].bindPopup(popupHTML(key));
         if (!map.hasLayer(markers[key])) markers[key].addTo(map);
       } else if (markers[key] && map.hasLayer(markers[key])) {
