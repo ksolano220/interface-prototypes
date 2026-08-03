@@ -330,29 +330,80 @@
     skyline:{ color: '#4fd8ff', name: 'Pier 45', tag: 'SKYLINE', lng: -74.0107, lat: 40.7317 }
   };
 
-  // Real points further up the Hudson River Greenway — a single continuous
-  // real path, so "further" here means an actually farther real destination,
-  // not a fabricated distance. Picked by goal size so bigger goals reach
-  // further up the water instead of stalling at the closest pier.
-  var SKYLINE_TIERS = [
-    { name: 'Pier 45', lng: -74.0107, lat: 40.7317 },
-    { name: 'Little Island', lng: -74.0099, lat: 40.7413 },
-    { name: 'Chelsea Piers', lng: -74.0088, lat: 40.7470 }
-  ];
+  // Each category has real, increasingly-farther NYC destinations, not one
+  // fixed point. Whichever categories are selected get upgraded tier by
+  // tier — real streets, real places — until the round-trip distance
+  // actually reaches the requested step goal (or every tier is maxed).
+  var TIERS = {
+    nature: [
+      { name: 'Washington Square Park', lng: -73.9973, lat: 40.7308 },
+      { name: 'Union Square Park', lng: -73.9911, lat: 40.7359 },
+      { name: 'Madison Square Park', lng: -73.9878, lat: 40.7424 }
+    ],
+    people: [
+      { name: 'Spring & Mercer', lng: -73.9994, lat: 40.7237 },
+      { name: 'Astor Place', lng: -73.9903, lat: 40.7291 },
+      { name: 'Union Square Plaza', lng: -73.9911, lat: 40.7359 }
+    ],
+    skyline: [
+      { name: 'Pier 45', lng: -74.0107, lat: 40.7317 },
+      { name: 'Little Island', lng: -74.0099, lat: 40.7413 },
+      { name: 'Chelsea Piers', lng: -74.0088, lat: 40.7470 }
+    ]
+  };
 
-  function chooseSkylinePoint(vibes) {
-    var others = vibes.filter(function (k) { return k !== 'skyline'; });
-    var othersRoundTripSteps = others.reduce(function (sum, k) {
-      return sum + haversineMiles(HOME, PLACES[k]) * 2 * 2000;
-    }, 0);
-    var budget = state.goal - othersRoundTripSteps;
-    var chosen = SKYLINE_TIERS[0];
-    for (var i = 0; i < SKYLINE_TIERS.length; i++) {
-      var roundTripSteps = haversineMiles(HOME, SKYLINE_TIERS[i]) * 2 * 2000;
-      if (roundTripSteps <= budget * 1.15) chosen = SKYLINE_TIERS[i];
-      else break;
+  function fitStopsToGoal(vibes, goal) {
+    var tierIndex = {};
+    vibes.forEach(function (k) { tierIndex[k] = 0; });
+
+    function roundTripSteps() {
+      return vibes.reduce(function (sum, k) {
+        var pt = TIERS[k][tierIndex[k]];
+        return sum + haversineMiles(HOME, pt) * 2 * 2000;
+      }, 0);
     }
-    return chosen;
+
+    var guard = 30;
+    while (roundTripSteps() < goal && guard-- > 0) {
+      var upgraded = false;
+      for (var i = 0; i < vibes.length; i++) {
+        var k = vibes[i];
+        if (tierIndex[k] < TIERS[k].length - 1) {
+          tierIndex[k]++;
+          upgraded = true;
+          break;
+        }
+      }
+      if (!upgraded) break;
+    }
+
+    var result = {};
+    vibes.forEach(function (k) {
+      result[k] = TIERS[k][tierIndex[k]];
+      result[k].tier = tierIndex[k];
+    });
+    return result;
+  }
+
+  // The AI-authored copy for nature/people names real Washington Square /
+  // Spring & Mercer landmarks (the fountain, the arch), so it only applies
+  // at tier 0. Farther real tiers get their own accurate, non-AI copy
+  // instead of misdescribing a different real place.
+  var TIER_FALLBACK_DESC = {
+    nature: [null,
+      'Union Square Park — real green space, a farmers market on market days, a busy transit hub at the edges.',
+      'Madison Square Park — tree-lined paths, dog runs, a lawn near the Flatiron Building.'],
+    people: [null,
+      'Astor Place — East Village foot traffic, the cube sculpture, NYU crowds nearby.',
+      'Union Square Plaza — street performers, the plaza steps, constant foot traffic.']
+  };
+
+  function getDescription(key) {
+    var tier = PLACES[key].tier || 0;
+    if (tier > 0 && TIER_FALLBACK_DESC[key] && TIER_FALLBACK_DESC[key][tier]) {
+      return TIER_FALLBACK_DESC[key][tier];
+    }
+    return state.activeOption.waypoints[key][state.time];
   }
 
   var IMAGES = { nature: null, people: null, skyline: null };
@@ -497,7 +548,7 @@
   function popupHTML(key) {
     var p = PLACES[key];
     var img = IMAGES[key] ? '<img class="popup-img" src="' + IMAGES[key] + '" alt="' + p.name + '" />' : '';
-    var desc = state.activeOption.waypoints[key][state.time];
+    var desc = getDescription(key);
     return '<div>' + img + '<div class="popup-title">' + p.name + '</div><div class="popup-desc">' + desc + '</div></div>';
   }
 
@@ -506,12 +557,13 @@
     ensureMap();
     var vibes = state.activeVibes;
 
-    if (vibes.indexOf('skyline') !== -1) {
-      var pick = chooseSkylinePoint(vibes);
-      PLACES.skyline.lat = pick.lat;
-      PLACES.skyline.lng = pick.lng;
-      PLACES.skyline.name = pick.name;
-    }
+    var fitted = fitStopsToGoal(vibes, state.goal);
+    vibes.forEach(function (key) {
+      PLACES[key].lat = fitted[key].lat;
+      PLACES[key].lng = fitted[key].lng;
+      PLACES[key].name = fitted[key].name;
+      PLACES[key].tier = fitted[key].tier;
+    });
 
     ORDER.forEach(function (key) {
       var on = vibes.indexOf(key) !== -1;
@@ -565,7 +617,7 @@
             '<span class="stop-head-copy"><span class="stop-index">STOP ' + (i + 1) + ' &middot; ' + p.tag + '</span><span class="stop-name">' + p.name + '</span></span>' +
             '<svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>' +
           '</div>' +
-          '<div class="stop-detail"><div class="stop-detail-inner"><p class="stop-desc">' + state.activeOption.waypoints[key][state.time] + '</p></div></div>' +
+          '<div class="stop-detail"><div class="stop-detail-inner"><p class="stop-desc">' + getDescription(key) + '</p></div></div>' +
         '</div>'
       );
     }).join('');
