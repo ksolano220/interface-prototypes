@@ -333,21 +333,31 @@
   // fixed point. Whichever categories are selected get upgraded tier by
   // tier — real streets, real places — until the round-trip distance
   // actually reaches the requested step goal (or every tier is maxed).
+  // Five real tiers per category, not three: a single selected category
+  // needs to be able to reach a big goal on its own. Falling back to an
+  // honest shortfall message should be a last resort after genuinely
+  // trying to get there, not a stand-in for a capability gap.
   var TIERS = {
     nature: [
       { name: 'Washington Square Park', lng: -73.9973, lat: 40.7308 },
       { name: 'Union Square Park', lng: -73.9911, lat: 40.7359 },
-      { name: 'Madison Square Park', lng: -73.9878, lat: 40.7424 }
+      { name: 'Madison Square Park', lng: -73.9878, lat: 40.7424 },
+      { name: 'Bryant Park', lng: -73.9832, lat: 40.7536 },
+      { name: 'Central Park (Columbus Circle)', lng: -73.9819, lat: 40.7680 }
     ],
     people: [
       { name: 'Spring & Mercer', lng: -73.9994, lat: 40.7237 },
       { name: 'Astor Place', lng: -73.9903, lat: 40.7291 },
-      { name: 'Union Square Plaza', lng: -73.9911, lat: 40.7359 }
+      { name: 'Union Square Plaza', lng: -73.9911, lat: 40.7359 },
+      { name: 'Herald Square', lng: -73.9878, lat: 40.7495 },
+      { name: 'Times Square', lng: -73.9855, lat: 40.7580 }
     ],
     skyline: [
       { name: 'Pier 45', lng: -74.0107, lat: 40.7317 },
       { name: 'Little Island', lng: -74.0099, lat: 40.7413 },
-      { name: 'Chelsea Piers', lng: -74.0088, lat: 40.7470 }
+      { name: 'Chelsea Piers', lng: -74.0088, lat: 40.7470 },
+      { name: 'Pier 76 / Hudson Yards', lng: -74.0021, lat: 40.7605 },
+      { name: 'Riverside Park South', lng: -73.9948, lat: 40.7712 }
     ]
   };
 
@@ -391,10 +401,14 @@
   var TIER_FALLBACK_DESC = {
     nature: [null,
       'Union Square Park — real green space, a farmers market on market days, a busy transit hub at the edges.',
-      'Madison Square Park — tree-lined paths, dog runs, a lawn near the Flatiron Building.'],
+      'Madison Square Park — tree-lined paths, dog runs, a lawn near the Flatiron Building.',
+      'Bryant Park — the reading room lawn, chess tables, right behind the Library.',
+      'Central Park at Columbus Circle — real tree cover, the loop path, much more room to walk.'],
     people: [null,
       'Astor Place — East Village foot traffic, the cube sculpture, NYU crowds nearby.',
-      'Union Square Plaza — street performers, the plaza steps, constant foot traffic.']
+      'Union Square Plaza — street performers, the plaza steps, constant foot traffic.',
+      'Herald Square — Macy\'s crowds, constant foot traffic, a subway hub at the surface.',
+      'Times Square — the loudest, busiest foot traffic in the city, lit up day or night.']
   };
 
   // The AI-authored copy has day/afternoon/evening variants; the UI now
