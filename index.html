@@ -241,9 +241,8 @@
         <div class="card glass">
           <span class="section-label">WHEN</span>
           <div class="pill-row" id="timeChips">
-            <button class="pill" data-time="day" type="button">Daytime</button>
-            <button class="pill" data-time="afternoon" type="button">Afternoon</button>
-            <button class="pill" data-time="evening" type="button">Evening</button>
+            <button class="pill" data-time="day" type="button">&#9728;&#65039; Daytime</button>
+            <button class="pill" data-time="night" type="button">&#127769; Nighttime</button>
           </div>
         </div>
 
@@ -398,12 +397,16 @@
       'Union Square Plaza — street performers, the plaza steps, constant foot traffic.']
   };
 
+  // The AI-authored copy has day/afternoon/evening variants; the UI now
+  // only offers Daytime/Nighttime, so nighttime reads the evening variant.
+  var DESC_TIME_KEY = { day: 'day', night: 'evening' };
+
   function getDescription(key) {
     var tier = PLACES[key].tier || 0;
     if (tier > 0 && TIER_FALLBACK_DESC[key] && TIER_FALLBACK_DESC[key][tier]) {
       return TIER_FALLBACK_DESC[key][tier];
     }
-    return state.activeOption.waypoints[key][state.time];
+    return state.activeOption.waypoints[key][DESC_TIME_KEY[state.time]];
   }
 
   var IMAGES = { nature: null, people: null, skyline: null };
@@ -411,13 +414,11 @@
   var ROUTE_OPTIONS = [{"id": "trellis-route", "name": "Winding Paths", "pitch": "Explore hidden gems on this leisurely NYC stroll.", "waypoints": {"nature": {"day": "Stroll through the park's lush greenery, surrounded by vibrant flowers.", "afternoon": "Watch the fountain's mesmerizing display, with children playing nearby.", "evening": "Enjoy the street performers' lively music, as the sun sets over the Village."}, "people": {"day": "Browse local boutiques and art galleries, with their windows full of creative treasures.", "afternoon": "Relax with a coffee at one of the charming cafes, surrounded by cast-iron elegance.", "evening": "Take in the electric atmosphere, with crowds of people strolling and socializing."}, "skyline": {"day": "Breathe in the salty air and take in the stunning view of the Hudson River.", "afternoon": "Watch sailboats and ferries cruise by, with the Jersey City skyline shimmering in the distance.", "evening": "Witness the breathtaking sunset, with the city lights beginning to twinkle."}}}, {"id": "metro-route", "name": "City Rush", "pitch": "Get a taste of the fast-paced NYC experience on this dynamic route.", "waypoints": {"nature": {"day": "Make a quick visit to the park, with its iconic arch and lively atmosphere.", "afternoon": "Snap a photo in front of the fountain, then head back out onto the bustling streets.", "evening": "Catch a few minutes of street entertainment, before continuing your urban adventure."}, "people": {"day": "Glimpse the unique architecture, with its mix of old and new buildings.", "afternoon": "Grab a snack at one of the sidewalk cafes, and keep moving with the crowds.", "evening": "Feel the energy of the area, with its vibrant nightlife and lively crowds."}, "skyline": {"day": "Take a brief pause to enjoy the view, before continuing on your busy schedule.", "afternoon": "Watch the boats and ships passing by, with the city's busy pace in the background.", "evening": "Capture the sunset over the Hudson, before heading back into the city's action."}}}];
 
   var ORDER = ['people', 'nature', 'skyline'];
-  var TIME_LABEL = { day: 'DAYTIME', afternoon: 'AFTERNOON', evening: 'EVENING' };
+  var TIME_LABEL = { day: 'DAYTIME', night: 'NIGHTTIME' };
 
   function detectTime() {
     var h = new Date().getHours();
-    if (h < 12) return 'day';
-    if (h < 18) return 'afternoon';
-    return 'evening';
+    return (h >= 6 && h < 18) ? 'day' : 'night';
   }
 
   function haversineMiles(a, b) {
