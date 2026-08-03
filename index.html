@@ -114,7 +114,10 @@
   .tab-badge.show { display: block; }
 
   .inbox-panel {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 4.8rem; z-index: 20;
+    /* Covers the full device, including behind the tab bar, so the tab
+       bar's own glass transparency reveals empty void back there instead
+       of peeking through to the home screen's content underneath it. */
+    position: absolute; inset: 0; z-index: 20;
     background: var(--void);
     display: flex; flex-direction: column;
     transform: translateX(100%);
@@ -133,7 +136,7 @@
     font-size: 1.1rem; cursor: pointer; display: grid; place-items: center;
   }
 
-  .inbox-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 1.1rem; }
+  .inbox-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 1.1rem 1.1rem calc(1.1rem + 4.8rem); }
 
   .inbox-card {
     border-radius: 16px; padding: 1.1rem 1.1rem 1.2rem;
@@ -349,6 +352,7 @@
 
         <span class="footline">STEPS + VIBES IN &middot; AI ROUTES OUT &middot; REAL STREETS, FREE MAP</span>
       </div>
+    </div>
 
       <div class="inbox-panel" id="inboxPanel" data-open="false">
         <div class="inbox-header">
@@ -357,7 +361,6 @@
         </div>
         <div class="inbox-body" id="inboxBody"></div>
       </div>
-    </div>
 
       <nav class="tab-bar glass">
         <button class="tab-item active" id="tabHome" type="button">
@@ -717,7 +720,7 @@
     statTime.textContent = Math.round(minutes);
     ctaBtn.textContent = steps >= state.goal
       ? 'Start walking · ' + miles.toFixed(1) + ' mi · ' + Math.round(minutes) + ' min'
-      : 'Real route: ' + steps.toLocaleString() + ' steps (goal was ' + state.goal.toLocaleString() + ')';
+      : steps.toLocaleString() + ' real steps. Wanted ' + state.goal.toLocaleString() + '? Add a stop, don\'t just wish for it.';
   }
 
   // ---------------- Inbox: real inactivity tracking via localStorage ----------------
@@ -739,11 +742,13 @@
     return Math.floor((Date.now() - ts) / DAY_MS);
   }
 
+  // Sassy on purpose — a coach, not a printout. Still every physiological
+  // claim is real; the attitude is the only thing that's an add-on.
   var INACTIVITY_MESSAGES = [
-    { minDays: 3, text: 'It’s been 3+ days since you walked. Muscle protein synthesis has already slowed, and sleep quality usually goes with it. Your body isn’t waiting for you to feel like it.' },
-    { minDays: 2, text: 'It’s been 2 days since you walked. Resting heart rate creeping up, energy dipping — that’s what “stopped moving” actually feels like on day two.' },
-    { minDays: 1, text: 'It’s been 1 day since you walked. Insulin sensitivity already started dropping. Your body noticed before you did.' },
-    { minDays: 0, text: 'You walked today. Everything above is what you’re avoiding by doing that.' }
+    { minDays: 3, text: 'Three days, soldier. Muscle protein synthesis has stalled and sleep quality is next to go. Your body isn’t waiting for a permission slip. Get up.' },
+    { minDays: 2, text: 'Day two of nothing. Resting heart rate creeping up, energy tanking — that’s not a mood, that’s just what quitting feels like. Let’s go.' },
+    { minDays: 1, text: 'One day off and your insulin sensitivity already noticed. One day. Move.' },
+    { minDays: 0, text: 'You walked today. Don’t get comfortable — that’s the whole job, every day.' }
   ];
 
   function pickMessage(days) {
