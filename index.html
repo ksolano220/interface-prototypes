@@ -41,7 +41,7 @@
   /* iPhone 16 aspect ratio (393:852), scaled to always fit the viewport */
   .device {
     aspect-ratio: 393 / 852;
-    height: min(852px, calc(100dvh - 5rem));
+    height: min(852px, calc(100dvh - 9rem));
     width: auto;
     max-width: calc(100vw - 2rem);
     border-radius: 48px; border: 10px solid #000;
@@ -83,12 +83,23 @@
   .status-time { font-family: var(--font-display); font-weight: 700; font-size: 0.9rem; letter-spacing: 0.01em; }
   .status-icons { display: flex; align-items: center; gap: 0.28rem; }
 
-  .body { position: relative; z-index: 2; padding: 0.5rem 1.05rem calc(1.8rem + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 1.2rem; }
+  .body { position: relative; z-index: 2; padding: 0.5rem 1.05rem calc(6.2rem + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 1.2rem; }
 
-  .top-row { display: flex; align-items: flex-start; justify-content: space-between; }
-  .greeting h1 { font-size: 1.15rem; font-weight: 800; margin: 0; color: var(--ink); line-height: 1.3; }
-  .greeting p { margin: 0.15rem 0 0; font-size: 0.8rem; font-weight: 500; color: var(--ink-soft); }
-  .avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 0.78rem; color: var(--cyan); flex-shrink: 0; border-radius: 999px; }
+  .logo-row { display: flex; align-items: center; justify-content: center; padding: 0.2rem 0 0.1rem; }
+  .logo-mark {
+    width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
+    color: var(--cyan); filter: drop-shadow(0 0 8px var(--cyan-dim));
+  }
+
+  .tab-bar {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 25;
+    display: flex; align-items: center; justify-content: space-around;
+    padding: 0.6rem 0.5rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
+    border-radius: 0;
+  }
+  .tab-item { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; color: var(--ink-faint); }
+  .tab-item.active { color: var(--cyan); filter: drop-shadow(0 0 4px var(--cyan-dim)); }
+  .tab-label { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.04em; }
 
   section { display: flex; flex-direction: column; gap: 0.6rem; }
   .section-label { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; color: var(--cyan); display: flex; align-items: center; gap: 0.4rem; }
@@ -199,12 +210,17 @@
       </div>
 
       <div class="body">
-        <div class="top-row">
-          <div class="greeting">
-            <span class="section-label" style="margin-bottom:0.3rem">CITY STROLLS</span>
-            <h1>Plan today's walk</h1><p>Steps, then what you want to see</p>
+        <div class="logo-row">
+          <div class="logo-mark glass" aria-label="City Strolls">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="4" r="2" fill="currentColor" stroke="none"/>
+              <path d="M12 6 L11 13" />
+              <path d="M12 7 L9 10" />
+              <path d="M12 8 L15 11" />
+              <path d="M11 13 L8 19" />
+              <path d="M11 13 L15 18" />
+            </svg>
           </div>
-          <div class="avatar glass">KS</div>
         </div>
 
         <div class="card glass">
@@ -277,6 +293,21 @@
 
         <span class="footline">STEPS + VIBES IN &middot; AI ROUTES OUT &middot; REAL STREETS, FREE MAP</span>
       </div>
+
+      <nav class="tab-bar glass">
+        <span class="tab-item active">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/></svg>
+          <span class="tab-label">Home</span>
+        </span>
+        <span class="tab-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <span class="tab-label">Search</span>
+        </span>
+        <span class="tab-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
+          <span class="tab-label">Profile</span>
+        </span>
+      </nav>
     </div>
   </div>
 </div>
