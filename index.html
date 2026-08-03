@@ -133,7 +133,7 @@
     font-size: 1.1rem; cursor: pointer; display: grid; place-items: center;
   }
 
-  .inbox-body { flex: 1; overflow-y: auto; padding: 1.1rem; }
+  .inbox-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 1.1rem; }
 
   .inbox-card {
     border-radius: 16px; padding: 1.1rem 1.1rem 1.2rem;
@@ -759,6 +759,7 @@
   var tabHome = document.getElementById('tabHome');
   var tabInbox = document.getElementById('tabInbox');
   var tabBadge = document.getElementById('tabBadge');
+  var screenEl = document.querySelector('.screen');
 
   function renderInbox() {
     var ts = getLastWalkTs();
@@ -774,7 +775,7 @@
       '</div>';
 
     document.getElementById('inboxCta').addEventListener('click', function () {
-      closeInbox();
+      goHome();
     });
 
     if (tabBadge) tabBadge.classList.toggle('show', days >= 1);
@@ -784,6 +785,10 @@
     inboxPanel.dataset.open = 'true';
     tabHome.classList.remove('active');
     tabInbox.classList.add('active');
+    // The inbox should only ever be an inbox: freeze the home screen's
+    // own scroll underneath it so nothing back there is reachable while
+    // the panel is open, not even via wheel/touch scroll-chaining.
+    screenEl.style.overflowY = 'hidden';
     renderInbox();
   }
 
@@ -791,10 +796,16 @@
     inboxPanel.dataset.open = 'false';
     tabInbox.classList.remove('active');
     tabHome.classList.add('active');
+    screenEl.style.overflowY = 'auto';
+  }
+
+  function goHome() {
+    closeInbox();
+    screenEl.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   tabInbox.addEventListener('click', openInbox);
-  tabHome.addEventListener('click', closeInbox);
+  tabHome.addEventListener('click', goHome);
   inboxClose.addEventListener('click', closeInbox);
 
   ctaBtn.addEventListener('click', function () {
